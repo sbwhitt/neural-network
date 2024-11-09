@@ -32,7 +32,6 @@ class Layer:
   def __len__(self) -> int:
     return len(self.neurons)
 
-# make output layer as desired prob distribution (vector of size 10 for digits)
 class Network:
   def __init__(self,
                x_train,
@@ -41,7 +40,7 @@ class Network:
                y_test,
                hidden_layers: list[int],
                output_layer_size: int,
-               learning_rate: float=0.5):
+               learning_rate: float=0.1):
     self.x_train = x_train
     self.y_train = y_train
     self.x_test = x_test
@@ -73,20 +72,12 @@ class Network:
     '''
     build error terms for each neuron of output layer for target training example
     '''
-    # print("backprop output")
-    # print("output", self.output_layer)
-    # print()
     for k, out_k in enumerate(self.output_layer):
       # derivative of activation function output times error
       err = (target[k] - out_k.activation)
       out_k.delta = self.d_act_func(out_k.activation) * err
-    pass
 
   def _backprop_hidden(self, hidden_layer: Layer, prev_layer: Layer) -> None:
-    # print("backprop hidden layer")
-    # print("current", hidden_layer)
-    # print("prev", prev_layer)
-    # print()
     for h, n_h in enumerate(hidden_layer):
       sum_prev_deltas = 0
       for prev_k in prev_layer:
@@ -134,7 +125,7 @@ class Network:
   def train(self, rounds: int) -> None:
     for i, t in enumerate(self.x_train[0:rounds]):
       label = self.y_train[i]
-      inp = np.concatenate(t) / 255
+      inp = np.concatenate(t) / 255 # processing specific to MNIST (0 - 255 pixel values)
       self._predict(inp)
       target = [0]*len(self.output_layer)
       target[label] = 1
