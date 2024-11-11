@@ -40,7 +40,8 @@ class Network:
                y_test,
                hidden_layers: list[int],
                output_layer_size: int,
-               learning_rate: float=0.1):
+               learning_rate: float=0.1,
+               pre_process: callable=None):
     self.x_train = x_train
     self.y_train = y_train
     self.x_test = x_test
@@ -48,6 +49,7 @@ class Network:
     self.hidden_layers = self._build_hidden_layers(hidden_layers)
     self.output_layer = self._build_output_layer(output_layer_size)
     self.learning_rate = learning_rate
+    self.pre_process = pre_process
     self.act_func = utils.tanh
     self.d_act_func = utils.d_tanh
 
@@ -122,30 +124,40 @@ class Network:
       self._feed_forward([n.activation for n in layer], self.hidden_layers[i+1])
     return [n.activation for n in self.output_layer]
 
-  def train(self, rounds: int) -> None:
-    for i, t in enumerate(self.x_train[0:rounds]):
-      label = self.y_train[i]
-      inp = np.concatenate(t) / 255 # processing specific to MNIST (0 - 255 pixel values)
+  def _train(self, start: int, end: int) -> None:
+    for i, t in enumerate(self.x_train[start:end]):
+      label = self.y_train[i+start]
+      inp = self.pre_process(t) if self.pre_process else inp
       self._predict(inp)
       target = [0]*len(self.output_layer)
       target[label] = 1
       self._backprop_output(target)
-      i = len(self.hidden_layers)-1
+      j = len(self.hidden_layers)-1
       prev_layer = self.output_layer
-      while i >= 0:
-        self._backprop_hidden(self.hidden_layers[i], prev_layer)
-        prev_layer = self.hidden_layers[i]
-        i -= 1
+      while j >= 0:
+        self._backprop_hidden(self.hidden_layers[j], prev_layer)
+        prev_layer = self.hidden_layers[j]
+        j -= 1
       self._update_weights(inp)
 
-  def predict_dist(self, inp: list[float]) -> list[float]:
+  def train(self, batches: int, batch_size: int) -> None:
+    for i in range(batches):
+      start = i * batch_size
+      end = (i+1) * batch_size
+      if start > 0: start += 1
+      print(f"starting training batch {i+1}, using training slice [{start}, {end}]")
+      self._train(start, end)
+
+  def predict_dist(self, inp: any) -> list[float]:
     '''
     returns softmax prob distribution of output values
     '''
+    inp = self.pre_process(inp) if self.pre_process else inp
     p = self._predict(inp)
     return utils.softmax(p)
 
-  def predict_one(self, inp: list[float]) -> int:
+  def predict_one(self, inp: any) -> int:
+    inp = self.pre_process(inp) if self.pre_process else inp
     p = utils.softmax(self._predict(inp))
     choice = 0
     for i, _ in enumerate(p):
