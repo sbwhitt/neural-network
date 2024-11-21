@@ -30,5 +30,11 @@ def relu(x: float) -> float:
 def d_relu(relu: float) -> float:
   return 1 if relu > 0 else 0
 
+def sigmoid(x: float) -> float:
+  return 1 / (1 + np.exp(-x))
+
+def d_sigmoid(sigmoid: float) -> float:
+  return sigmoid * (1 - sigmoid)
+
 def softmax(z: list[float]) -> list[float]:
   return np.exp(z) / sum(np.exp(z))

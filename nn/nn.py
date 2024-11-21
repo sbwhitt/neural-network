@@ -39,27 +39,28 @@ class Network:
                y_train,
                y_test,
                hidden_layers: list[int],
+               input_layer_size: int,
                output_layer_size: int,
                learning_rate: float=0.1,
-               pre_process: callable=None):
+               pre_process: callable=lambda x: x):
     self.x_train = x_train
     self.y_train = y_train
     self.x_test = x_test
     self.y_test = y_test
-    self.hidden_layers = self._build_hidden_layers(hidden_layers)
+    self.hidden_layers = self._build_hidden_layers(hidden_layers, input_layer_size)
     self.output_layer = self._build_output_layer(output_layer_size)
     self.learning_rate = learning_rate
     self.pre_process = pre_process
     self.act_func = utils.tanh
     self.d_act_func = utils.d_tanh
 
-  def _build_hidden_layers(self, layers: list[int]) -> list[Layer]:
+  def _build_hidden_layers(self, layers: list[int], input_layer_size: int) -> list[Layer]:
     hidden: list[Layer] = []
     for i, l in enumerate(layers):
       if i == 0:
         # num_inp_weights = size of input layer for first hidden layer
         hidden.append(
-          Layer(size=l, num_inp_weights=len(np.concatenate(self.x_train[0])))
+          Layer(size=l, num_inp_weights=input_layer_size)
         )
         continue
       hidden.append(
@@ -157,8 +158,7 @@ class Network:
     return utils.softmax(p)
 
   def predict_one(self, inp: any) -> int:
-    inp = self.pre_process(inp) if self.pre_process else inp
-    p = utils.softmax(self._predict(inp))
+    p = self.predict_dist(inp)
     choice = 0
     for i, _ in enumerate(p):
       if p[i] > p[choice]: choice = i
