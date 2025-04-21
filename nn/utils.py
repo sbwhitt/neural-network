@@ -25,10 +25,11 @@ def d_tanh(tanh_x: float) -> float:
   return (1 - tanh_x**2)
 
 def relu(x: float) -> float:
-  return x if x > 0 else 0
+  return 0 if x < 0 else x
 
 def d_relu(relu: float) -> float:
-  return 1 if relu > 0 else 0
+  r = 0 if relu <= 0 else 1
+  return r
 
 def sigmoid(x: float) -> float:
   return 1 / (1 + np.exp(-x))
