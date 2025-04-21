@@ -16,7 +16,7 @@ class MnistDataloader(object):
     self.test_images_filepath = test_images_filepath
     self.test_labels_filepath = test_labels_filepath
 
-  def read_images_labels(self, images_filepath, labels_filepath):
+  def read_images_labels(self, images_filepath, labels_filepath) -> tuple[np.ndarray, np.ndarray]:
     labels = []
     with open(labels_filepath, 'rb') as file:
       magic, size = struct.unpack(">II", file.read(8))
@@ -37,9 +37,9 @@ class MnistDataloader(object):
         img = img.reshape(28, 28)
         images[i][:] = img
       
-      return images, labels
+      return np.array(images), np.array(labels)
           
-  def load_data(self):
+  def load_data(self) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
     x_train, y_train = self.read_images_labels(self.training_images_filepath, self.training_labels_filepath)
     x_test, y_test = self.read_images_labels(self.test_images_filepath, self.test_labels_filepath)
     return (x_train, y_train), (x_test, y_test)

@@ -15,7 +15,7 @@ class Neuron:
   def __repr__(self) -> str:
     return f"Neuron(activation={self.activation}, num_weights={len(self.weights)})"
 
-  def _build_weights(self, n: int) -> list[float]:
+  def _build_weights(self, n: int) -> np.ndarray:
     # random floats between -0.5 and 0.5
     return (0.5 - (-0.5))*rs.rand(n) + (-0.5)
 
@@ -34,10 +34,8 @@ class Layer:
 
 class Network:
   def __init__(self,
-               x_train,
-               x_test,
-               y_train,
-               y_test,
+               x_train: np.ndarray,
+               y_train: np.ndarray,
                hidden_layers: list[int],
                input_layer_size: int,
                output_layer_size: int,
@@ -45,8 +43,6 @@ class Network:
                pre_process: callable=lambda x: x):
     self.x_train = x_train
     self.y_train = y_train
-    self.x_test = x_test
-    self.y_test = y_test
     self.hidden_layers = self._build_hidden_layers(hidden_layers, input_layer_size)
     self.output_layer = self._build_output_layer(output_layer_size)
     self.learning_rate = learning_rate
@@ -91,21 +87,20 @@ class Network:
       # prev layer error times connecting weight
       n_h.delta = self.d_act_func(n_h.activation) * sum_prev_deltas
 
-  def _update_weights(self, training_input: list[float]) -> None:
-    inputs = []
+  def _update_weights(self, training_input: np.ndarray) -> None:
+    inputs = None
     layers = self.hidden_layers + [self.output_layer]
     for k, layer in enumerate(layers):
       if k == 0:
         inputs = training_input
       else:
-        inputs = [n.activation for n in self.hidden_layers[k-1]]
+        inputs = np.array([n.activation for n in self.hidden_layers[k-1]])
       for n in layer:
         # update bias
         n.bias += n.delta * self.learning_rate
-        for j, w_ij in enumerate(n.weights):
-          # new weight is old weight plus learning rate times corresponding 
-          # input times the error of the neuron
-          n.weights[j] = w_ij + (self.learning_rate * inputs[j] * n.delta)
+        # new weight is old weight plus learning rate times corresponding 
+        # input times the error of the neuron
+        n.weights = n.weights + (self.learning_rate * inputs * n.delta)
 
   def _feed_forward(self, inp_activations: list[float], current: Layer) -> None:
     for n in current:
@@ -113,7 +108,7 @@ class Network:
       # activation function
       n.activation = self.act_func(dot)
 
-  def _predict(self, inp: list[float]) -> list[float]:
+  def _predict(self, inp: np.ndarray) -> np.ndarray:
     '''
     returns raw activations of output layer
     '''
@@ -123,12 +118,12 @@ class Network:
         self._feed_forward([n.activation for n in self.hidden_layers[-1]], self.output_layer)
         continue
       self._feed_forward([n.activation for n in layer], self.hidden_layers[i+1])
-    return [n.activation for n in self.output_layer]
+    return np.array([n.activation for n in self.output_layer])
 
   def _train(self, start: int, end: int) -> None:
     for i, t in enumerate(self.x_train[start:end]):
       label = self.y_train[i+start]
-      inp = self.pre_process(t) if self.pre_process else inp
+      inp = self.pre_process(t)
       self._predict(inp)
       target = [0]*len(self.output_layer)
       target[label] = 1
