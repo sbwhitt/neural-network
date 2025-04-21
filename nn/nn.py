@@ -1,15 +1,12 @@
 from collections.abc import Iterator
 from . import utils
 import numpy as np
-from numpy.random import MT19937
-from numpy.random import RandomState, SeedSequence
-rs = RandomState(MT19937(SeedSequence()))
 
 class Neuron:
   def __init__(self, num_weights: int):
     self.weights = self._build_weights(num_weights)
     self.activation = 0.0
-    self.bias = (0.5 - (-0.5))*rs.rand() + (-0.5)
+    self.bias = (0.5 - (-0.5))*np.random.rand() + (-0.5)
     self.delta = 0.0
 
   def __repr__(self) -> str:
@@ -17,7 +14,7 @@ class Neuron:
 
   def _build_weights(self, n: int) -> np.ndarray:
     # random floats between -0.5 and 0.5
-    return (0.5 - (-0.5))*rs.rand(n) + (-0.5)
+    return (0.5 - (-0.5))*np.random.rand(n) + (-0.5)
 
 class Layer:
   def __init__(self, size: int, num_inp_weights: int):
